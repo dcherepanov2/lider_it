@@ -23,10 +23,6 @@ CREATE OR REPLACE FUNCTION public.filterbyparambooks(
 
 AS $BODY$
   BEGIN
-  
-  	--name в book не может быть null, поэтому передача туда null означает что фильтр по имени не передавался
-	--номер книги не может быть -1, поэтому передача в var2 -1 означает что параметр фильтрации "номер" указан не был
-	--если var4 = -1, то и var 3 не передавался
 	
   	IF var1 != 'null' AND var2 = -1 AND var3 IS NULL THEN
 		RETURN QUERY SELECT * FROM books book WHERE book.name = var1;
