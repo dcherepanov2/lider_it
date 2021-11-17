@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd
+      http://www.liquibase.org/xml/ns/pro
+      http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd">
+
+    <changeSet id="4" author="cherepanov_danil">
+        <sql splitStatements="false"
+             stripComments="true" >
+
+            CREATE
+            OR REPLACE FUNCTION public.filterbyparambooks(
+                var1 character varying,
+                var2 integer,
+                var3 boolean)
+                    RETURNS SETOF books
+                    LANGUAGE 'plpgsql'
+                    COST 100
+                    VOLATILE PARALLEL UNSAFE
+                    ROWS 1000
+
+            AS
+                    $BODY$
+            BEGIN
+
+            IF var1 != 'null' AND var2 = -1 AND var3 IS NULL THEN
+                RETURN QUERY SELECT * FROM books book
+            WHERE book.name = var1;
+            END IF;
+
+            IF var2 != -1 AND var1 = 'null' AND var3 IS NULL THEN
+                RETURN QUERY SELECT * FROM books book WHERE book.number = var2;
+            END IF;
+
+            IF var3 IS NOT NULL AND var1 = 'null' AND var2 = -1 THEN
+                RETURN QUERY SELECT * FROM books book WHERE book.availability = var3;
+            END IF;
+
+            IF var1 != 'null' AND var2 != -1 AND var3 IS NULL THEN
+                RETURN QUERY SELECT *FROM books book WHERE book.name = var1 AND book.number = var2;
+            END IF;
+
+            IF var1 != 'null' AND var2 = -1 AND var3 IS NOT NULL THEN
+                RETURN QUERY SELECT * FROM books book WHERE book.name = var1 AND book.availability = var3;
+            END IF;
+
+            IF var2 != -1 AND var1 != 'null' AND var3 IS NOT NULL THEN
+                RETURN QUERY SELECT * FROM books book WHERE book.name = var1 AND book.number = var2 AND book.availability = var3;
+            END IF;
+
+            IF var1 = 'null' AND var2 != -1 AND var3 IS NOT NULL THEN
+                RETURN QUERY SELECT * FROM books book WHERE book.number = var2 AND book.availability = var3;
+            END IF;
+
+            RETURN;
+            END;
+            $BODY$;
+
+        </sql>
+    </changeSet>
+</databaseChangeLog>
