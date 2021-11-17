@@ -27,7 +27,7 @@ public class Book {
 
     @Column(name = "availability")
     @NotNull
-    private boolean availability;
+    private boolean availability ;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_id")//загуглил - существуют книги без автора, по этой причине не стал ставить нотнул аннотацию

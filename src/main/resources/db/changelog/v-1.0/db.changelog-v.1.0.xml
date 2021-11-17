@@ -11,7 +11,7 @@
 
     <include file="01-changeset-author-table.xml" relativeToChangelogFile="true"/>
     <include file="01-changeset-book-table.xml" relativeToChangelogFile="true"/>
-
+    <include file="01-changeset-filterBooks.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
 

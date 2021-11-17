@@ -1,43 +1,33 @@
-package com.cd.LiderIT_test.entity;
+package com.cd.LiderIT_test.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sun.istack.NotNull;
+import com.cd.LiderIT_test.entity.Author;
 
-import javax.persistence.*;
-import java.sql.Date;
+public class AuthorDTO {
 
-@Entity
-@Table(name = "authors")
-public class Author {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     private Long id;
 
-    @Column(name = "name")
-    @NotNull
     private String name;
 
-    @Column(name = "patronymic")
-    @NotNull
-    @JsonProperty(value = "patronymic")
     private String patronymic;
 
-    @Column(name = "surname")
-    @NotNull
     private String surname;
 
-    @Column(name = "birthday")
-    @NotNull
-    private Date birthday;
+    private String birthday;
 
-    @Column(name = "biography")
-    @JsonProperty(value = "biography")
+
     private String biography;
 
-    public Author() {
+    public AuthorDTO(Author author) {
+        this.id = author.getId();
+        this.name = author.getName();
+        this.patronymic = author.getPatronymic();
+        this.surname = author.getSurname();
+        this.birthday = author.getBirthday().toString();
+        if (author.getBiography() != null)
+            this.biography = author.getBiography();
+    }
 
+    public AuthorDTO() {
     }
 
     public String getName() {
@@ -64,11 +54,11 @@ public class Author {
         this.surname = surname;
     }
 
-    public Date getBirthday() {
+    public String getBirthday() {
         return birthday;
     }
 
-    public void setBirthday(Date birthday) {
+    public void setBirthday(String birthday) {
         this.birthday = birthday;
     }
 

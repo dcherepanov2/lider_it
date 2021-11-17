@@ -1,11 +1,11 @@
 package com.cd.LiderIT_test.exception;
 
-public class BookException extends Exception{
+public class BookException extends Exception {
 
     private final String message;
 
     public BookException(String error) {
-        this.message= error;
+        this.message = error;
     }
 
     @Override

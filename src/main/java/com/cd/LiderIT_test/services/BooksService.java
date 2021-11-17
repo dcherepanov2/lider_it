@@ -1,15 +1,17 @@
 package com.cd.LiderIT_test.services;
 
-import com.cd.LiderIT_test.entity.Author;
+import com.cd.LiderIT_test.dto.BookDTO;
+import com.cd.LiderIT_test.dto.BookList;
+import com.cd.LiderIT_test.dto.BookToJson;
 import com.cd.LiderIT_test.entity.Book;
 import com.cd.LiderIT_test.exception.BookException;
-import com.cd.LiderIT_test.parsers.Parser;
-import com.cd.LiderIT_test.repo.AuthorRepository;
 import com.cd.LiderIT_test.repo.BookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,121 +20,67 @@ import java.util.stream.Stream;
 public class BooksService {
 
     private final BookRepository bookRepository;
-    private final AuthorRepository authorRepository;
-    private final Parser parser;
 
     @Autowired
-    public BooksService(BookRepository bookRepository, AuthorRepository authorRepository, Parser parser) {
+    public BooksService(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
-        this.authorRepository = authorRepository;
-        this.parser = parser;
     }
 
     public Book bookDeleteNumber(Integer id) throws BookException {
         Book book = bookRepository.findById(id);
         if (book != null) {
-            bookRepository.updateAvailability(id);
-            return book;
+            book.setAvailability(false);
+            bookRepository.save(book);
+            return bookRepository.findById(id);
         }
-        throw new BookException("Books not found exception");
+        throw new BookException("Books not found with this id");
     }
 
-    public Book addBook(String bookRequest) throws BookException {
-        if (bookRequest != null) {
-            Map<String, String> bookKeyValues = parser.bookValidate(bookRequest);
-            Book book1 = new Book();
-            if (bookKeyValues.get("name") == null)
-                throw new BookException("The required parameter name was not passed in the request");
-            try {
-                if (bookKeyValues.get("name") != null && bookKeyValues.get("author_id") != null)
-                    book1 = bookRepository.findBookByNameAndAuthor(
-                            bookKeyValues.get("name"), Long.valueOf(bookKeyValues.get("author_id"))
-                    );
-            } catch (NullPointerException e) {
-                if (book1.getId() != null) {
-                    throw new BookException("Such a book already exists.");
-                }
-            }
-            try {
-                book1 = new Book();
-                if (bookKeyValues.get("number") != null)
-                    book1.setNumber(Integer.valueOf(bookKeyValues.get("number")));//
-                if (bookKeyValues.get("author_id") != null) {
-                    Author author = authorRepository.findById(Integer.valueOf(bookKeyValues.get("author_id")));
-                    book1.setAuthor(author);
-                }
-
-                book1.setAvailability(Boolean.parseBoolean(bookKeyValues.get("availability")));
-                book1.setName(bookKeyValues.get("name"));
-                bookRepository.save(book1);
-                return book1;
-            } catch (Exception e) {
-                throw new BookException("One or more required parameters passed in the request are null. Please check the correctness of the request.");
-            }
+    public Book addBook(Book bookRequest) throws BookException {
+        Book bookCheck = null;
+        if (bookRequest.getAuthor() != null && bookRequest.getName() != null) {
+            bookCheck = bookRepository.findBookByNameAndAuthor(bookRequest.getName(), bookRequest.getAuthor().getId());
         }
-        throw new BookException("Request equals null. Please check your param in request");
-    }
-
-    public Book editBook(Integer bookId, String request) throws BookException {
-        Book book = bookRepository.findById(bookId);
-        Map<String, String> bookRequest = parser.bookValidate(request);
+        if (bookCheck != null) {
+            throw new BookException("Such a book already exists.");
+        }
         try {
-            Author author;
-            if (book.getId() != null) {
-                if (bookRequest.get("name") != null)
-                    book.setName(bookRequest.get("name"));
-                if (bookRequest.get("author_id") != null) {
-                    author = authorRepository.findById(Integer.valueOf(bookRequest.get("author_id")));
-                    book.setAuthor(author);
-                }
-                if (bookRequest.get("availability") != null)
-                    book.setAvailability(Boolean.parseBoolean(bookRequest.get("availability")));
-                if (bookRequest.get("number") != null)
-                    book.setNumber(Integer.valueOf(bookRequest.get("number")));
-                try {
-                    bookRepository.save(book);
-                    return book;
-                } catch (Exception e) {
-                    throw new BookException("One or more required parameters passed in the request are null. Please check the correctness of the request.");
-                }
+            bookRepository.save(bookRequest);
+        } catch (DataIntegrityViolationException e) {
+            throw new BookException("One or more required parameters are not specified in the request." +
+                    "Please check your request.");
+        }
+        return bookRequest;
+    }
+
+    public Book editBook(Book bookRequest) throws BookException {
+        Book book = bookRepository.findById(Integer.valueOf(String.valueOf(bookRequest.getId())));
+        if (book != null) {
+            if (bookRequest.getName() != null)
+                book.setName(bookRequest.getName());
+            try {
+                book.setAvailability(bookRequest.isAvailability());
+            } catch (NullPointerException e) {
+
             }
-        } catch (Exception e) {
-            throw new BookException("The book with the specified id does not exist");
+            if (bookRequest.getAuthor() != null)
+                book.setAuthor(bookRequest.getAuthor());
+            if (bookRequest.getNumber() != null)
+                book.setNumber(bookRequest.getNumber());
+            bookRepository.save(book);
+            return book;
         }
         throw new BookException("The book with the specified id does not exist");
     }
 
-    public Map<String, Map<String, HashMap<String, HashMap<String, String>>>> getAllBooks(List<Book> allBooksParam) {
-        Map<String, Map<String, HashMap<String, HashMap<String, String>>>> allBooksData = new HashMap<>();
-        Map<String, HashMap<String, HashMap<String, String>>> allBooks = new HashMap<>();//создание всех книг
-
+    public BookList getAllBooks(List<Book> allBooksParam) {
+        BookList bookList = new BookList();
+        List<BookToJson> allBook = new ArrayList<>();
         for (Book book : allBooksParam) {
-            allBooks.put("book" + book.getId(), new HashMap<String, HashMap<String, String>>() {{
-
-                HashMap<String, String> bookOne = new HashMap<>();//перебор всех книг и запись их в хешмапу
-                bookOne.put("id", String.valueOf(book.getId()));
-                bookOne.put("name", book.getName());
-                bookOne.put("availability", String.valueOf(book.isAvailability()));
-                bookOne.put("number", String.valueOf(book.getNumber()));
-
-                put("bookData", bookOne);
-
-                Author author = book.getAuthor();
-                HashMap<String, String> authorBook = new HashMap<>();
-                if (author != null) {
-                    authorBook.put("id", String.valueOf(author.getId()));
-                    authorBook.put("name", author.getName());
-                    authorBook.put("surname", author.getSurname());
-                    authorBook.put("patronymic", author.getPatronymic());
-                    authorBook.put("biography", author.getBiography());
-                    authorBook.put("birthday", author.getBirthday().toString());
-
-                }
-                put("authorBook", authorBook);
-            }});
+            allBook.add(new BookToJson(new BookDTO(book)));
         }
-        allBooksData.put("books", allBooks);
-        return allBooksData;
+        bookList.setListBook(allBook);
+        return bookList;
     }
 
     public List<Book> getBookRepository() {

@@ -19,13 +19,13 @@ public interface BookRepository extends JpaRepository<Book, Long> { //TODO: пр
             value = "select * from books where author_id =:author_id",
             nativeQuery = true
     )
-    List<Book> allBooksFindByAuthor(@Param("author_id")Integer authorId);//все книги одного автора
+    List<Book> allBooksFindByAuthor(@Param("author_id") Integer authorId);//все книги одного автора
 
     @Query(
             value = "select * from books where name =:name AND author_id=:author_id",
             nativeQuery = true
     )
-    Book findBookByNameAndAuthor(@Param("name") String name,@Param("author_id") Long authorId);
+    Book findBookByNameAndAuthor(@Param("name") String name, @Param("author_id") Long authorId);
 
     @Transactional
     @Modifying
@@ -45,7 +45,7 @@ public interface BookRepository extends JpaRepository<Book, Long> { //TODO: пр
             value = "SELECT * from filterbyparambooks(:name,:number,:availability)",
             nativeQuery = true
     )
-    List<Book> filterByParam(@Param("name")String name,@Param("number") int number,@Param("availability") boolean availability);
+    List<Book> filterByParam(@Param("name") String name, @Param("number") int number, @Param("availability") boolean availability);
 
     List<Book> findByName(String name);
 

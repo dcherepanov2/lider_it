@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 
-public interface AuthorRepository extends JpaRepository<Author,Long> {//TODO: обработать все исключения в случае если запрос равен нул
+public interface AuthorRepository extends JpaRepository<Author, Long> {//TODO: обработать все исключения в случае если запрос равен нул
 
     @Query(
             value = "select * from authors WHERE name = :name AND surname = :surname AND patronymic=:patronymic"
